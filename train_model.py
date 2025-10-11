@@ -9,6 +9,8 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 import joblib
 import numpy as np
 import mlflow as mlflow
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def create_preprocessor():
@@ -60,32 +62,42 @@ def model_train():
     # Prepare features and target
     X = train_data[predictors]  # Use only selected predictors
     y = train_data['LogSalePrice']
+
+    
     
     # Identify numeric and categorical columns from selected predictors
     num_predictors = X.select_dtypes(include=[np.number]).columns.tolist()
     cat_predictors = X.select_dtypes(include=['object']).columns.tolist()
     
-    print(f"Selected numeric predictors: {num_predictors}")
-    print(f"Selected categorical predictors: {cat_predictors}")
-    
-  
-    mlflow.log_params({
-            "model_type": "RandomForestRegressor",
-            "preprocessing": "ColumnTransformer"
-        })
-    
-    """Train a Random Forest Regressor."""
-    model_pipeline = Pipeline(steps=[('preprocessor', create_preprocessor()),
-                                     ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))])
-
     mlflow.log_params({
             "n_samples": len(X),
             "n_features": len(X.columns),
-            "predictors": predictors,
+            "num predictors": num_predictors,
+            "cat predictors": cat_predictors,
             "target": "LogSalePrice"
         })
+
+    print(f"Selected numeric predictors: {num_predictors}")
+    print(f"Selected categorical predictors: {cat_predictors}")
     
-   
+    model_params = {
+        'n_estimators': 10,
+        'random_state': 42,
+        'n_jobs': -1
+        }
+    
+    """Train a Random Forest Regressor."""
+    model_pipeline = Pipeline(steps=[('preprocessor', create_preprocessor()),
+                                     ('regressor', RandomForestRegressor(**model_params))])
+
+  
+    mlflow.log_params({
+            "model_type": "RandomForestRegressor",
+            "preprocessing": "ColumnTransformer",
+            **model_params
+        })
+    
+
     # Train the model
     model_pipeline.fit(X=X, y=y)
     
@@ -131,6 +143,16 @@ def model_train():
     except Exception as e:
         print(f"Could not display feature importance: {e}")
         print(f"Number of features after preprocessing: {len(model_pipeline.named_steps['regressor'].feature_importances_)}")
+        
+        ## Plot feature importance
+        plt.figure(figsize=(10, 6))
+        sns.barplot(data=feature_importance.head(10), x='importance', y='feature')
+        plt.title('Top 10 Feature Importances')
+        plt.tight_layout()
+        plt.savefig('feature_importance_ct.png', dpi=300, bbox_inches='tight')
+        
+        # ✅ Log plot to MLflow
+        mlflow.log_artifact('feature_importance_ct.png')
 
     # Save the model
     joblib.dump(model_pipeline, 'trained_model.pkl')
