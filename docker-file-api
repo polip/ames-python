@@ -1,0 +1,39 @@
+# Dockerfile for FastAPI application - Google Cloud Run optimized
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements - FIX: Use requirements.txt not requirements_gcloud.txt
+COPY requirements_gcloud.txt .
+RUN pip install --no-cache-dir -r requirements_gcloud.txt
+
+# Copy application files
+COPY ames_fastapi.py .
+
+COPY model/ /app/model/
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash fastapi-user && \
+    chown -R fastapi-user:fastapi-user /app
+
+USER fastapi-user
+
+# Environment variables - FIX: Don't set PORT here, let Cloud Run set it
+ENV PYTHONUNBUFFERED=1
+ENV GOOGLE_CLOUD_PROJECT=ames-housing-472418
+
+# Expose port (documentation only)
+EXPOSE 8080
+
+# FIX: Remove or increase health check timeout
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
+
+# FIX: Use shell form for proper variable expansion
+CMD uvicorn ames_fastapi:app --host 0.0.0.0 --port ${PORT:-8080} --log-level info

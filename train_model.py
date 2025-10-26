@@ -63,7 +63,7 @@ def model_train():
     X = train_data[predictors]  # Use only selected predictors
     y = train_data['LogSalePrice']
 
-    
+    input_example = X.iloc[[0]]
     
     # Identify numeric and categorical columns from selected predictors
     num_predictors = X.select_dtypes(include=[np.number]).columns.tolist()
@@ -81,7 +81,7 @@ def model_train():
     print(f"Selected categorical predictors: {cat_predictors}")
     
     model_params = {
-        'n_estimators': 10,
+        'n_estimators': 5,
         'random_state': 42,
         'n_jobs': -1
         }
@@ -122,9 +122,9 @@ def model_train():
     print(f"MAE: {cross_val_metrics['mae']:.4f}")
     
     if cross_val_metrics['r2'] > 0.8:  # Log only if accuracy is reasonable
-            mlflow.sklearn.log_model(
-                model_pipeline, 
-                "model",
+            mlflow.sklearn.log_model(input_example=input_example,
+                sk_model= model_pipeline, 
+                name="model",
                 registered_model_name="ames-housing-random-forest"
          )
     # Get feature names after preprocessing
@@ -140,6 +140,7 @@ def model_train():
 
         print("\nTop 10 Feature Importance:")
         print(feature_importance.head(10))
+
     except Exception as e:
         print(f"Could not display feature importance: {e}")
         print(f"Number of features after preprocessing: {len(model_pipeline.named_steps['regressor'].feature_importances_)}")
@@ -155,8 +156,18 @@ def model_train():
         mlflow.log_artifact('feature_importance_ct.png')
 
     # Save the model
-    joblib.dump(model_pipeline, 'trained_model.pkl')
-    print("Model saved as 'trained_model.pkl'")
+    joblib.dump(model_pipeline, 'model/ames_rf_model.pkl')
+    print("Model saved as 'ames-rf-model.pkl'")
+
+    from google.cloud import storage
+    # The client will automatically use Application Default Credentials (ADC)
+    client = storage.Client()
+    bucket = client.bucket('scikit-models')
+    blob = bucket.blob('ames-rf-model.pkl')
+    blob.upload_from_filename('model/ames_rf_model.pkl')
+    print("Model uploaded to Google Cloud Storage bucket 'scikit-models' as 'ames-rf-model.pkl'")
+    
+     # End the MLflow run
     mlflow.end_run()
 
     return model_pipeline

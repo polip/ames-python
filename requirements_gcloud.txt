@@ -1,0 +1,12 @@
+# requirements-gcloud.txt
+# Container runtime requirements only
+fastapi>=0.68.0
+uvicorn[standard]>=0.15.0
+pydantic>=1.8.0
+python-multipart>=0.0.5
+google-cloud-storage>=2.0.0
+google-auth>=2.0.0
+scikit-learn>=1.1.0
+joblib>=1.2.0
+numpy>=1.21.0
+pandas==2.3.3
