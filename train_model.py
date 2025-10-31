@@ -48,7 +48,8 @@ def model_train():
     train_data = pd.read_csv('input/train.csv')
     print(f"Loaded training data: {train_data.shape}")
     
-    train_data['LogSalePrice'] = np.log1p(train_data['SalePrice'])
+    # transform the target variable with log10
+    train_data['LogSalePrice'] = np.log10(train_data['SalePrice'])
 
     # Enable MLflow autologging
     mlflow.set_experiment("ames-housing-prices")
@@ -130,8 +131,7 @@ def model_train():
     # Get feature names after preprocessing
     try:
         # Get feature names from the preprocessor
-        feature_names = (num_predictors + 
-                        [f"cat_{i}" for i in range(len(model_pipeline.named_steps['regressor'].feature_importances_) - len(num_predictors))])
+        feature_names = (num_predictors + cat_predictors)
         
         feature_importance = pd.DataFrame({
             'Feature': feature_names[:len(model_pipeline.named_steps['regressor'].feature_importances_)],
@@ -155,9 +155,12 @@ def model_train():
         # ✅ Log plot to MLflow
         mlflow.log_artifact('feature_importance_ct.png')
 
-    # Save the model
+    # Save the model and feature names locally
     joblib.dump(model_pipeline, 'model/ames_rf_model.pkl')
     print("Model saved as 'ames-rf-model.pkl'")
+    joblib.dump(feature_names, 'model/feature_names.pkl')
+    print("Feature names saved as 'feature_names.pkl'")
+    
 
     from google.cloud import storage
     # The client will automatically use Application Default Credentials (ADC)
