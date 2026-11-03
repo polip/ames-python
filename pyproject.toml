@@ -1,13 +1,14 @@
 [project]
 name = "ames-python"
 version = "0.1.0"
-description = "Add your description here"
+description = "Ames Housing price prediction: Random Forest model served via FastAPI on Cloud Run"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.118.0",
     "google-cloud>=0.34.0",
     "google-cloud-storage>=3.4.1",
+    "ipykernel>=7.4.0",
     "joblib>=1.5.2",
     "matplotlib>=3.10.6",
     "mlflow>=3.4.0",
@@ -18,3 +19,33 @@ dependencies = [
     "streamlit>=1.50.0",
     "uvicorn>=0.37.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.28.0",
+    "mypy>=1.15.0",
+    "pytest>=8.0.0",
+    "ruff>=0.11.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["N806", "N803", "E501"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

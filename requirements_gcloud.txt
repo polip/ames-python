@@ -1,12 +1,15 @@
-# requirements-gcloud.txt
-# Container runtime requirements only
+# requirements_gcloud.txt
+# Container runtime requirements only (no mlflow, matplotlib, seaborn, streamlit).
+# Run `uv export --format requirements-txt --no-hashes > requirements.txt` for the full list.
 fastapi>=0.68.0
 uvicorn[standard]>=0.15.0
 pydantic>=1.8.0
 python-multipart>=0.0.5
 google-cloud-storage>=2.0.0
 google-auth>=2.0.0
-scikit-learn>=1.1.0
-joblib>=1.2.0
-numpy>=1.21.0
+# Pinned to the training venv: sklearn pickles are NOT cross-version compatible
+# (unpinning causes "No module named '_loss'" at container startup).
+scikit-learn==1.7.2
+joblib==1.5.2
+numpy==2.3.3
 pandas==2.3.3

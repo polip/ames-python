@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements - FIX: Use requirements.txt not requirements_gcloud.txt
+# Copy requirements — using the minimal runtime-only subset (no mlflow/matplotlib/streamlit)
+# Regnerate with: uv export --format requirements-txt --no-hashes --only-dev > requirements_gcloud.txt
 COPY requirements_gcloud.txt .
 RUN pip install --no-cache-dir -r requirements_gcloud.txt
 
